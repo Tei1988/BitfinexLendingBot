@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/eAndrius/bitfinex-go"
 )
@@ -18,6 +19,7 @@ var (
 	updateLends = flag.Bool("updatelends", false, "Update lend offerings")
 	dryRun      = flag.Bool("dryrun", false, "Output strategy decisions without placing orders")
 	logToFile   = flag.Bool("logtofile", false, "Write log to file instead of stdout")
+	daemon      = flag.Bool("daemon", false, "Run continuously (every 10 minutes)")
 )
 
 // BotConfig ...
@@ -53,12 +55,11 @@ func init() {
 	}
 }
 
-func main() {
+func runSequence() {
 	file, err := os.Open(*configFile)
 	if err != nil {
 		log.Fatal("Failed to open config file: " + err.Error())
 	}
-
 	decoder := json.NewDecoder(file)
 	confs := BotConfigs{}
 	err = decoder.Decode(&confs)
@@ -90,5 +91,21 @@ func main() {
 				continue
 			}
 		}
+	}
+}
+
+func main() {
+	runSequence()
+	if *daemon {
+		tickerInterval := time.Duration(time.Minute * time.Duration(10))
+		log.Println("Running in deamon mode. Intveral: ", tickerInterval)
+		ticker := time.NewTicker(tickerInterval)
+		go func() {
+			for t := range ticker.C {
+				runSequence()
+				log.Println("run finished.", "[", t, "]")
+			}
+		}()
+		select {} // block forever to keep process alive
 	}
 }
