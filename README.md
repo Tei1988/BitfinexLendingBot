@@ -1,5 +1,9 @@
 # BitfinexLendingBot Overview
 
+This is a fork of the excellent work of [https://github.com/eAndrius](https://github.com/eAndrius).
+
+Few things are extended. Donations on this page are removed. Referrals have been left as they were.
+
 BitfinexLendingBot (BLB) is a bot written in Go for automatic swap lending on the [Bitfinex](https://www.bitfinex.com/?refcode=7zVc3vSAbR) exchange. It works with all supported currencies (USD, BTC, LTC), is headless, does not require database setups and has unit testing for the lending strategies.
 
 If you still don't have an account with [Bitfinex](https://www.bitfinex.com/?refcode=7zVc3vSAbR), please use referrer code **7zVc3vSAbR**, that way you will get a discount on your lending fees and will support the continued development of this project.
@@ -63,19 +67,17 @@ If you still don't have an account with [Bitfinex](https://www.bitfinex.com/?ref
 
         ./BitfinexLendingBot --updatelends --logtofile
 
-## Scheduling
+* `--daemon` Run continuously.
 
-To run the Bot every 10 minutes with cron (`$ crontab -e`) use:
+    Example:
 
-```
-*/10 * * * * lockrun -n /tmp/blb.lock BitfinexLendingBot --updatelends --logtofile
-```
+        ./BitfinexLendingBot --daemon
 
-Alternatively, to run in GNU Screen or similar use:
+* `--interval` Minutes between iterations when running as daemon (default: 10)
 
-```bash
-while [[ 1 ]]; do timeout 30s BitfinexLendingBot --updatelends --logtofile; sleep 10m; done
-```
+    Example:
+
+        ./BitfinexLendingBot --interval=5
 
 # Configuration
 
@@ -196,8 +198,8 @@ See a [weekly updated spreadsheet](https://docs.google.com/a/sutas.eu/spreadshee
 
 Free for non-commercial (personal only) use. If you intend to use BitfinexLendingBot for a commercial purpose, please contact BitfinexLendingBot [at] motoko [dot] sutas [dot] eu to arrange a License.
 
-# Like the Project? Show Support
+<!-- # Like the Project? Show Support
 
 ฿ [1ASutaskUbCNiRxKcjwxA6PaymCZuqgLbL](bitcoin:17JKH8zRVM22SuYdYgfHJkgBQtUtYbRoJy?amount=0.01&label=Andrius%20Sutas&message=bitfinex-go)
 
-![1ASutaskUbCNiRxKcjwxA6PaymCZuqgLbl](img/btc.png)
+![1ASutaskUbCNiRxKcjwxA6PaymCZuqgLbl](img/btc.png) -->
