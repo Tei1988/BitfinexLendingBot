@@ -19,7 +19,8 @@ var (
 	updateLends = flag.Bool("updatelends", false, "Update lend offerings")
 	dryRun      = flag.Bool("dryrun", false, "Output strategy decisions without placing orders")
 	logToFile   = flag.Bool("logtofile", false, "Write log to file instead of stdout")
-	daemon      = flag.Bool("daemon", false, "Run continuously (every 10 minutes)")
+	daemon      = flag.Bool("daemon", false, "Run continuously")
+	interval    = flag.Int64("interval", 10, "Minutes between iterations when run as daemon (default: 10)")
 )
 
 // BotConfig ...
@@ -97,7 +98,7 @@ func runSequence() {
 func main() {
 	runSequence()
 	if *daemon {
-		tickerInterval := time.Duration(time.Minute * time.Duration(10))
+		tickerInterval := time.Duration(time.Minute * time.Duration(*interval))
 		log.Println("Running in deamon mode. Intveral: ", tickerInterval)
 		ticker := time.NewTicker(tickerInterval)
 		go func() {
