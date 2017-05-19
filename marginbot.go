@@ -60,7 +60,7 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	balanceOnOffers := 0.0
 	for _, o := range offers {
 		if strings.ToLower(o.Currency) == activeWallet {
-			log.Println("\tFound active offer: " + strconv.Itoa(o.ID) + ", " + o.Currency + ", " + o.Direction + ", " + strconv.FormatFloat(o.RemainingAmount, 'f', -1, 64) + " @ " + strconv.FormatFloat(o.Rate/356, 'f', -1, 64))
+			log.Println("\tFound active offer: " + strconv.Itoa(o.ID) + ", " + o.Currency + ", " + o.Direction + ", " + strconv.FormatFloat(o.RemainingAmount, 'f', -1, 64) + " @ " + strconv.FormatFloat(o.Rate/356, 'f', -1, 64) + " %")
 			balanceOnOffers = balanceOnOffers + o.RemainingAmount
 			if err != nil {
 				return
@@ -68,15 +68,6 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 		}
 	}
 	log.Println("\tTotal balance on offers: " + strconv.FormatFloat(balanceOnOffers, 'f', -1, 64) + " " + activeWallet)
-
-	// TODO check offers if offer can remain  / limit this down.
-	if !dryRun {
-		log.Println("\tCancelling all active " + activeWallet + " offers...")
-		err = api.CancelActiveOffersByCurrency(activeWallet)
-		if err != nil {
-			return
-		}
-	}
 
 	// Update the lendbook
 	log.Println("\tGetting current lendbook...")
@@ -91,7 +82,6 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	if err != nil {
 		return errors.New("Failed to get wallet funds: " + err.Error())
 	}
-	//	balance = balance + balanceOnOffers
 
 	// Calculate minimum loan size
 	minLoan := bconf.Bitfinex.MinLoanUSD
@@ -124,35 +114,66 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	}
 
 	loanOffers := marginBotGetLoanOffers(available, minLoan, lendbook, conf)
+	// toBeCancelled := make([]bitfinex.Offer, 0)
 
-	// Place the offers
+	// DEEBUG only print
 	for _, o := range loanOffers {
-		const TOLERANCE = 0.000001
-		offerExists := false
-		for _, activeOffer := range offers {
-			// log.Println("Checking offer " + strconv.Itoa(activeOffer.ID))
-			if math.Abs(activeOffer.Rate-o.Rate) < TOLERANCE && math.Abs(activeOffer.OriginalAmount-o.Amount) < TOLERANCE { // keep offer, dont place
-				log.Println("No need to renew offer " + strconv.Itoa(activeOffer.ID))
-				offerExists = true
-				break
-			}
-		}
+		log.Println("\twould place new offer: " +
+			strconv.FormatFloat(o.Amount, 'f', -1, 64) + " " + activeWallet + " @ " +
+			strconv.FormatFloat(o.Rate/365.0, 'f', -1, 64) + " % for " + strconv.Itoa(o.Period) + " days")
+	}
 
-		if !offerExists {
-			log.Println("\tPlacing offer: " +
-				strconv.FormatFloat(o.Amount, 'f', -1, 64) + " " + activeWallet + " @ " +
-				strconv.FormatFloat(o.Rate/365.0, 'f', -1, 64) + " % for " + strconv.Itoa(o.Period) + " days")
-			if !dryRun {
-				_, err = api.NewOffer(strings.ToUpper(activeWallet), o.Amount, o.Rate, o.Period, bitfinex.LEND)
-				if err != nil {
-					return errors.New("Failed to place new offer: " + err.Error())
+	// Check an cancel the offers
+	const TOLERANCE_RATE float64 = 0.005
+	const TOLERANCE_AMOUNT float64 = 0.01
+	numRemoved := 0
+	for i, activeOffer := range offers {
+		alreadyRemoved := false
+
+		for _, newOffer := range loanOffers {
+			if !alreadyRemoved {
+				//DEBUG
+				//log.Println("activeOffer.Rate: " + strconv.FormatFloat(activeOffer.Rate/356, 'f', -1, 64))
+				//log.Println("o.Rate: " + strconv.FormatFloat(o.Rate/356, 'f', -1, 64))
+				if !(activeOffer.Rate/356-newOffer.Rate/356 < TOLERANCE_RATE && activeOffer.RemainingAmount-newOffer.Amount < TOLERANCE_AMOUNT) { // keep offer if we would place at same rate
+					log.Println("Marking offer " + strconv.Itoa(activeOffer.ID) +
+						" for cancellation due to rate deviation of " + strconv.FormatFloat(activeOffer.Rate/356-newOffer.Rate/356, 'f', -1, 64) +
+						" amount deviation of " + strconv.FormatFloat(activeOffer.RemainingAmount-newOffer.Amount, 'f', 5, 64))
+					// toBeCancelled = append(toBeCancelled, activeOffer)
+					log.Println("Cancelled offer ID " + strconv.Itoa(activeOffer.ID))
+					if !dryRun {
+						api.CancelOffer(activeOffer.ID)
+						alreadyRemoved = true
+					}
+
+				} else {
+					if !alreadyRemoved {
+						log.Println("Offer position [" + strconv.Itoa(i) + "] " + strconv.FormatFloat(newOffer.Amount, 'f', -1, 64) + " @ " + strconv.FormatFloat(newOffer.Rate/356, 'f', -1, 64) + " % will be removed from lendOffers")
+						loanOffers = append(loanOffers[:i-numRemoved], loanOffers[i-numRemoved+1:]...)
+						numRemoved = numRemoved + 1
+						// log.Println("numRemoved: " + strconv.Itoa(numRemoved))
+						alreadyRemoved = true
+					}
 				}
 			}
 		}
 	}
 
-	log.Println("\tRun done.")
+	log.Println("New Offers to be placed: " + strconv.Itoa(len(loanOffers)))
+	// Place new offers
+	for _, o := range loanOffers {
+		log.Println("\tPlacing offer: " +
+			strconv.FormatFloat(o.Amount, 'f', -1, 64) + " " + activeWallet + " @ " +
+			strconv.FormatFloat(o.Rate/365.0, 'f', -1, 64) + " % for " + strconv.Itoa(o.Period) + " days")
+		if !dryRun {
+			_, err = api.NewOffer(strings.ToUpper(activeWallet), o.Amount, o.Rate, o.Period, bitfinex.LEND)
+			if err != nil {
+				return errors.New("Failed to place new offer: " + err.Error())
+			}
+		}
+	}
 
+	log.Println("\tRun done.")
 	return
 }
 
