@@ -60,7 +60,7 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	balanceOnOffers := 0.0
 	for _, o := range offers {
 		if strings.ToLower(o.Currency) == activeWallet {
-			log.Println("\tFound active offer: " + strconv.Itoa(o.ID) + ", " + o.Currency + ", " + o.Direction + ", " + strconv.FormatFloat(o.RemainingAmount, 'f', -1, 64) + " @ " + strconv.FormatFloat(o.Rate/356, 'f', -1, 64) + " %")
+			log.Println("\tFound active offer: " + strconv.Itoa(o.ID) + ", " + o.Currency + ", " + o.Direction + ", " + strconv.FormatFloat(o.RemainingAmount, 'f', 5, 64) + " @ " + strconv.FormatFloat(o.Rate/356, 'f', 5, 64) + " %")
 			balanceOnOffers = balanceOnOffers + o.RemainingAmount
 			if err != nil {
 				return
@@ -117,10 +117,10 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	// toBeCancelled := make([]bitfinex.Offer, 0)
 
 	// DEEBUG only print
-	for _, o := range loanOffers {
-		log.Println("\twould place new offer: " +
-			strconv.FormatFloat(o.Amount, 'f', -1, 64) + " " + activeWallet + " @ " +
-			strconv.FormatFloat(o.Rate/365.0, 'f', -1, 64) + " % for " + strconv.Itoa(o.Period) + " days")
+	for i, o := range loanOffers {
+		log.Println("\tWould place new offer: [" + strconv.Itoa(i) + "]" +
+			strconv.FormatFloat(o.Amount, 'f', 5, 64) + " " + activeWallet + " @ " +
+			strconv.FormatFloat(o.Rate/365.0, 'f', 5, 64) + " % for " + strconv.Itoa(o.Period) + " days")
 	}
 
 	// Check an cancel the offers
@@ -141,7 +141,7 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 					}
 				} else {
 					if !alreadyProcessed {
-						log.Println("Offer [" + strconv.Itoa(i) + "] " + strconv.FormatFloat(newOffer.Amount, 'f', 5, 64) + " @ " + strconv.FormatFloat(newOffer.Rate/356, 'f', 5, 64) + " % will be removed from lendOffers")
+						log.Println("\tOffer [" + strconv.Itoa(i) + "] " + strconv.FormatFloat(newOffer.Amount, 'f', 5, 64) + " @ " + strconv.FormatFloat(newOffer.Rate/356, 'f', 5, 64) + " % will be removed from lendOffers")
 						loanOffers = append(loanOffers[:i-numRemoved], loanOffers[i-numRemoved+1:]...)
 						numRemoved = numRemoved + 1
 
