@@ -118,7 +118,7 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 
 	// DEEBUG only print
 	for i, o := range loanOffers {
-		log.Println("\tWould place new offer: [" + strconv.Itoa(i) + "]" +
+		log.Println("\tWould place new offer: [" + strconv.Itoa(i) + "] " +
 			strconv.FormatFloat(o.Amount, 'f', 5, 64) + " " + activeWallet + " @ " +
 			strconv.FormatFloat(o.Rate/365.0, 'f', 5, 64) + " % for " + strconv.Itoa(o.Period) + " days")
 	}
