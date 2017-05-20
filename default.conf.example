@@ -18,7 +18,9 @@
                 "GapTop": 5000,
                 "ThirtyDayDailyThreshold": 0.0,
                 "HighHoldDailyRate": 0.05,
-                "HighHoldAmount": 0.0
+                "HighHoldAmount": 0.0,
+                "toleranceRate": 0.0002,
+                "toleranceAmount": 0.01
             }
         }
     },
@@ -40,7 +42,9 @@
                 "MinDailyLendRate": 0.01,
                 "ReductionIntervalMinutes": 10,
                 "LendPeriod": 2,
-                "ExponentialDecayMult": 1.0
+                "ExponentialDecayMult": 1.0,
+                "toleranceRate": 0.002,
+                "toleranceAmount": 1
             }
         }
     }
