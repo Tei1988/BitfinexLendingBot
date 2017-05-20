@@ -22,8 +22,8 @@ type MarginBotConf struct {
 	ThirtyDayDailyThreshold float64
 	HighHoldDailyRate       float64
 	HighHoldAmount          float64
-	toleranceAmount         float64
-	toleranceRate           float64
+	ToleranceAmount         float64
+	ToleranceRate           float64
 }
 
 // MarginBotLoanOffer ...
@@ -116,7 +116,6 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	}
 
 	loanOffers := marginBotGetLoanOffers(available, minLoan, lendbook, conf)
-	// toBeCancelled := make([]bitfinex.Offer, 0)
 
 	// DEEBUG only print
 	for i, o := range loanOffers {
@@ -126,8 +125,8 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	}
 
 	// Check an cancel the offers
-	toleranceRate := conf.toleranceRate
-	toleranceAmount := conf.toleranceAmount
+	toleranceRate := conf.ToleranceRate
+	toleranceAmount := conf.ToleranceAmount
 	numRemoved := 0
 	for i, activeOffer := range offers {
 		alreadyProcessed := false
@@ -136,21 +135,20 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 				if !(activeOffer.Rate/356-newOffer.Rate/356 < toleranceRate && activeOffer.RemainingAmount-newOffer.Amount < toleranceAmount) { // keep offer if we would place at same rate
 					log.Println("\tWill cancel offer " + strconv.Itoa(activeOffer.ID) +
 						": rate deviation of " + strconv.FormatFloat(activeOffer.Rate/356-newOffer.Rate/356, 'f', 5, 64) +
-						" amount deviation of " + strconv.FormatFloat(activeOffer.RemainingAmount-newOffer.Amount, 'f', 5, 64))
+						" (" + strconv.FormatFloat(toleranceRate, 'f', 5, 64) + ") " +
+						" amount deviation of " + strconv.FormatFloat(activeOffer.RemainingAmount-newOffer.Amount, 'f', 5, 64) +
+						" (" + strconv.FormatFloat(toleranceAmount, 'f', 5, 64) + ") ")
 					if !dryRun {
 						api.CancelOffer(activeOffer.ID)
 						log.Println("\tCancelled offer ID " + strconv.Itoa(activeOffer.ID))
 					}
 				} else {
-					if !alreadyProcessed {
-						log.Println("\tOffer [" + strconv.Itoa(i) + "] " + strconv.FormatFloat(newOffer.Amount, 'f', 5, 64) + " @ " + strconv.FormatFloat(newOffer.Rate/356, 'f', 5, 64) + " % will be removed from lendOffers")
-						loanOffers = append(loanOffers[:i-numRemoved], loanOffers[i-numRemoved+1:]...)
-						numRemoved = numRemoved + 1
-
-					}
+					log.Println("\tOffer [" + strconv.Itoa(i) + "] " + strconv.FormatFloat(newOffer.Amount, 'f', 5, 64) + " @ " + strconv.FormatFloat(newOffer.Rate/356, 'f', 5, 64) + " % will be removed from lendOffers")
+					loanOffers = append(loanOffers[:i-numRemoved], loanOffers[i-numRemoved+1:]...)
+					numRemoved = numRemoved + 1
 				}
+				alreadyProcessed = true
 			}
-			alreadyProcessed = true
 		}
 	}
 
