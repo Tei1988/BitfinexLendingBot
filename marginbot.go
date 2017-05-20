@@ -124,14 +124,14 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	}
 
 	// Check an cancel the offers
-	const TOLERANCE_RATE float64 = 0.002
+	const TOLERANCE_RATE float64 = 0.0002
 	const TOLERANCE_AMOUNT float64 = 0.01
 	numRemoved := 0
 	for i, activeOffer := range offers {
 		alreadyProcessed := false
 		for _, newOffer := range loanOffers {
 			if !alreadyProcessed {
-				if !(activeOffer.Rate/356-newOffer.Rate/356 < TOLERANCE_RATE &&  activeOffer.RemainingAmount-newOffer.Amount < TOLERANCE_AMOUNT) { // keep offer if we would place at same rate
+				if !(activeOffer.Rate/356-newOffer.Rate/356 < TOLERANCE_RATE && activeOffer.RemainingAmount-newOffer.Amount < TOLERANCE_AMOUNT) { // keep offer if we would place at same rate
 					log.Println("\tWill cancel offer " + strconv.Itoa(activeOffer.ID) +
 						": rate deviation of " + strconv.FormatFloat(activeOffer.Rate/356-newOffer.Rate/356, 'f', 5, 64) +
 						" amount deviation of " + strconv.FormatFloat(activeOffer.RemainingAmount-newOffer.Amount, 'f', 5, 64))
