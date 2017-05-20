@@ -124,42 +124,35 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	}
 
 	// Check an cancel the offers
-	const TOLERANCE_RATE float64 = 0.005
+	const TOLERANCE_RATE float64 = 0.002
 	const TOLERANCE_AMOUNT float64 = 0.01
 	numRemoved := 0
 	for i, activeOffer := range offers {
-		alreadyRemoved := false
-
+		alreadyProcessed := false
 		for _, newOffer := range loanOffers {
-			if !alreadyRemoved {
-				//DEBUG
-				//log.Println("activeOffer.Rate: " + strconv.FormatFloat(activeOffer.Rate/356, 'f', -1, 64))
-				//log.Println("o.Rate: " + strconv.FormatFloat(o.Rate/356, 'f', -1, 64))
-				if !(activeOffer.Rate/356-newOffer.Rate/356 < TOLERANCE_RATE && activeOffer.RemainingAmount-newOffer.Amount < TOLERANCE_AMOUNT) { // keep offer if we would place at same rate
-					log.Println("Marking offer " + strconv.Itoa(activeOffer.ID) +
-						" for cancellation due to rate deviation of " + strconv.FormatFloat(activeOffer.Rate/356-newOffer.Rate/356, 'f', -1, 64) +
+			if !alreadyProcessed {
+				if !(activeOffer.Rate/356-newOffer.Rate/356 < TOLERANCE_RATE || activeOffer.RemainingAmount-newOffer.Amount < TOLERANCE_AMOUNT) { // keep offer if we would place at same rate
+					log.Println("\tWill cancel offer " + strconv.Itoa(activeOffer.ID) +
+						": rate deviation of " + strconv.FormatFloat(activeOffer.Rate/356-newOffer.Rate/356, 'f', 5, 64) +
 						" amount deviation of " + strconv.FormatFloat(activeOffer.RemainingAmount-newOffer.Amount, 'f', 5, 64))
-					// toBeCancelled = append(toBeCancelled, activeOffer)
-					log.Println("Cancelled offer ID " + strconv.Itoa(activeOffer.ID))
 					if !dryRun {
 						api.CancelOffer(activeOffer.ID)
-						alreadyRemoved = true
+						log.Println("\tCancelled offer ID " + strconv.Itoa(activeOffer.ID))
 					}
-
 				} else {
-					if !alreadyRemoved {
-						log.Println("Offer position [" + strconv.Itoa(i) + "] " + strconv.FormatFloat(newOffer.Amount, 'f', -1, 64) + " @ " + strconv.FormatFloat(newOffer.Rate/356, 'f', -1, 64) + " % will be removed from lendOffers")
+					if !alreadyProcessed {
+						log.Println("Offer [" + strconv.Itoa(i) + "] " + strconv.FormatFloat(newOffer.Amount, 'f', 5, 64) + " @ " + strconv.FormatFloat(newOffer.Rate/356, 'f', 5, 64) + " % will be removed from lendOffers")
 						loanOffers = append(loanOffers[:i-numRemoved], loanOffers[i-numRemoved+1:]...)
 						numRemoved = numRemoved + 1
-						// log.Println("numRemoved: " + strconv.Itoa(numRemoved))
-						alreadyRemoved = true
+
 					}
 				}
 			}
+			alreadyProcessed = true
 		}
 	}
 
-	log.Println("New Offers to be placed: " + strconv.Itoa(len(loanOffers)))
+	log.Println("\tNew Offers to be placed: " + strconv.Itoa(len(loanOffers)))
 	// Place new offers
 	for _, o := range loanOffers {
 		log.Println("\tPlacing offer: " +
@@ -172,7 +165,6 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 			}
 		}
 	}
-
 	log.Println("\tRun done.")
 	return
 }
