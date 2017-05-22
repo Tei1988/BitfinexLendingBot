@@ -130,13 +130,15 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	numRemoved := 0
 	for i, activeOffer := range offers {
 		alreadyProcessed := false
-		for _, newOffer := range loanOffers {
+		for j, newOffer := range loanOffers {
 			if !alreadyProcessed {
-				if !(activeOffer.Rate/356-newOffer.Rate/356 < toleranceRate && activeOffer.RemainingAmount-newOffer.Amount < toleranceAmount) { // keep offer if we would place at same rate
-					log.Println("\tWill cancel offer " + strconv.Itoa(activeOffer.ID) +
-						": rate deviation of " + strconv.FormatFloat(activeOffer.Rate/356-newOffer.Rate/356, 'f', 5, 64) +
+				rateDiff := activeOffer.Rate/356 - newOffer.Rate/356
+				amountDiff := activeOffer.RemainingAmount - newOffer.Amount
+				if !(math.Abs(rateDiff) < toleranceRate && math.Abs(amountDiff) < toleranceAmount) { // keep offer if we would place at same rate
+					log.Println("\tWill cancel offer [" + strconv.Itoa(j) + "] " + strconv.Itoa(activeOffer.ID) +
+						": rate deviation: " + strconv.FormatFloat(activeOffer.Rate/356-newOffer.Rate/356, 'f', 5, 64) +
 						" (" + strconv.FormatFloat(toleranceRate, 'f', 5, 64) + ") " +
-						" amount deviation of " + strconv.FormatFloat(activeOffer.RemainingAmount-newOffer.Amount, 'f', 5, 64) +
+						" amount deviation: " + strconv.FormatFloat(activeOffer.RemainingAmount-newOffer.Amount, 'f', 5, 64) +
 						" (" + strconv.FormatFloat(toleranceAmount, 'f', 5, 64) + ") ")
 					if !dryRun {
 						api.CancelOffer(activeOffer.ID)
