@@ -2,3 +2,4 @@ default.conf
 BitfinexLendingBot
 docker-compose.override.yml
 .vscode
+debug
