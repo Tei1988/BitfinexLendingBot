@@ -42,7 +42,8 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 
 	// Do sanity check: Is MinDailyLendRate set?
 	if conf.MinDailyLendRate <= 0.003 { // 0.003% daily == 1.095% yearly
-		log.Println("\tWARNING: minimum daily lend rate is low (" + strconv.FormatFloat(conf.MinDailyLendRate, 'f', -1, 64) + "%)")
+		log.Println("\tWARNING: minimum daily lend rate is low (" +
+			strconv.FormatFloat(conf.MinDailyLendRate, 'f', -1, 64) + "%)")
 	}
 
 	// Do sanity check: Is HighHold rate higher than minimum daily rate?
@@ -69,7 +70,8 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 			}
 		}
 	}
-	log.Println("\tTotal balance on offers: " + strconv.FormatFloat(balanceOnOffers, 'f', -1, 64) + " " + activeWallet)
+	log.Println("\tTotal balance on offers: " +
+		strconv.FormatFloat(balanceOnOffers, 'f', -1, 64) + " " + activeWallet)
 
 	// Update the lendbook
 	log.Println("\tGetting current lendbook...")
@@ -102,7 +104,8 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	walletAmount := balance[bitfinex.WalletKey{"deposit", activeWallet}].Amount
 	if walletAmount < minLoan {
 		log.Println("\tWARNING: Wallet amount (" +
-			strconv.FormatFloat(walletAmount, 'f', -1, 64) + " " + activeWallet + ") is less than the allowed minimum (" +
+			strconv.FormatFloat(walletAmount, 'f', -1, 64) + " " +
+			activeWallet + ") is less than the allowed minimum (" +
 			strconv.FormatFloat(minLoan, 'f', -1, 64) + " " + activeWallet + ")")
 	}
 
@@ -145,7 +148,10 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 						log.Println("\tCancelled offer ID " + strconv.Itoa(activeOffer.ID))
 					}
 				} else {
-					log.Println("\tOffer [" + strconv.Itoa(i) + "] " + strconv.FormatFloat(newOffer.Amount, 'f', 5, 64) + " @ " + strconv.FormatFloat(newOffer.Rate/356, 'f', 5, 64) + " % will be removed from lendOffers")
+					log.Println("\tOffer [" + strconv.Itoa(i) + "] " +
+						strconv.FormatFloat(newOffer.Amount, 'f', 5, 64) + " @ " +
+						strconv.FormatFloat(newOffer.Rate/356, 'f', 5, 64) +
+						" % will not be placed. Too similar to active offer.")
 					loanOffers = append(loanOffers[:i-numRemoved], loanOffers[i-numRemoved+1:]...)
 					numRemoved = numRemoved + 1
 				}
