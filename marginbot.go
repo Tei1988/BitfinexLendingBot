@@ -130,32 +130,33 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	// Check an cancel the offers
 	toleranceRate := conf.ToleranceRate
 	toleranceAmount := conf.ToleranceAmount
-	numRemoved := 0
-	for i, activeOffer := range offers {
+	for _, activeOffer := range offers {
 		alreadyProcessed := false
+
 		for j, newOffer := range loanOffers {
-			if !alreadyProcessed {
-				rateDiff := activeOffer.Rate/356 - newOffer.Rate/356
-				amountDiff := activeOffer.RemainingAmount - newOffer.Amount
-				if !(math.Abs(rateDiff) < toleranceRate && math.Abs(amountDiff) < toleranceAmount) { // keep offer if we would place at same rate
-					log.Println("\tWill cancel offer [" + strconv.Itoa(j) + "] " + strconv.Itoa(activeOffer.ID) +
-						": rate deviation: " + strconv.FormatFloat(activeOffer.Rate/356-newOffer.Rate/356, 'f', 5, 64) +
-						" (" + strconv.FormatFloat(toleranceRate, 'f', 5, 64) + ") " +
-						" amount deviation: " + strconv.FormatFloat(activeOffer.RemainingAmount-newOffer.Amount, 'f', 5, 64) +
-						" (" + strconv.FormatFloat(toleranceAmount, 'f', 5, 64) + ") ")
-					if !dryRun {
-						api.CancelOffer(activeOffer.ID)
-						log.Println("\tCancelled offer ID " + strconv.Itoa(activeOffer.ID))
+			if strings.ToLower(activeOffer.Currency) == activeWallet {
+				if !alreadyProcessed {
+					rateDiff := activeOffer.Rate/356 - newOffer.Rate/356
+					amountDiff := activeOffer.RemainingAmount - newOffer.Amount
+					if !(math.Abs(rateDiff) < toleranceRate && math.Abs(amountDiff) < toleranceAmount) { // keep offer if we would place at same rate
+						log.Println("\tWill cancel offer " + strconv.Itoa(activeOffer.ID) +
+							": rate deviation: " + strconv.FormatFloat(activeOffer.Rate/356-newOffer.Rate/356, 'f', 5, 64) +
+							" (" + strconv.FormatFloat(toleranceRate, 'f', 5, 64) + ") " +
+							" amount deviation: " + strconv.FormatFloat(activeOffer.RemainingAmount-newOffer.Amount, 'f', 5, 64) +
+							" (" + strconv.FormatFloat(toleranceAmount, 'f', 5, 64) + ") ")
+						if !dryRun {
+							api.CancelOffer(activeOffer.ID)
+							log.Println("\tCancelled offer ID " + strconv.Itoa(activeOffer.ID))
+						}
+					} else {
+						log.Println("\tNew offer [" + strconv.Itoa(j) + "] " +
+							strconv.FormatFloat(newOffer.Amount, 'f', 5, 64) + " @ " +
+							strconv.FormatFloat(newOffer.Rate/356, 'f', 5, 64) +
+							" % will not be placed. Too similar to active offer.")
+						loanOffers = append(loanOffers[:j], loanOffers[j+1:]...)
 					}
-				} else {
-					log.Println("\tOffer [" + strconv.Itoa(i) + "] " +
-						strconv.FormatFloat(newOffer.Amount, 'f', 5, 64) + " @ " +
-						strconv.FormatFloat(newOffer.Rate/356, 'f', 5, 64) +
-						" % will not be placed. Too similar to active offer.")
-					loanOffers = append(loanOffers[:i-numRemoved], loanOffers[i-numRemoved+1:]...)
-					numRemoved = numRemoved + 1
+					alreadyProcessed = true
 				}
-				alreadyProcessed = true
 			}
 		}
 	}
@@ -183,7 +184,7 @@ func marginBotGetLoanOffers(fundsAvailable, minLoan float64, lendbook bitfinex.L
 		return
 	}
 
-	splitFundsAvailable := fundsAvailable
+	splitFundsAvailable := fundsAvailable * 0.9999 // hotfix to not run into rounding errors :()
 
 	// HighHold is a special case, substract from the available amount
 	// HighHoldAmount = 0 => No HighHold required
