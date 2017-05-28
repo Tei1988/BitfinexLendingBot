@@ -149,10 +149,10 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 							log.Println("\tCancelled offer ID " + strconv.Itoa(activeOffer.ID))
 						}
 					} else {
-						log.Println("\tNew offer [" + strconv.Itoa(j) + "] " +
+						log.Println("\tKeeping offer " +
 							strconv.FormatFloat(newOffer.Amount, 'f', 5, 64) + " @ " +
 							strconv.FormatFloat(newOffer.Rate/356, 'f', 5, 64) +
-							" % will not be placed. Too similar to active offer.")
+							" %. Not placing replacement.")
 						loanOffers = append(loanOffers[:j], loanOffers[j+1:]...)
 					}
 					alreadyProcessed = true
