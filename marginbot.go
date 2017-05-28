@@ -184,7 +184,7 @@ func marginBotGetLoanOffers(fundsAvailable, minLoan float64, lendbook bitfinex.L
 		return
 	}
 
-	splitFundsAvailable := fundsAvailable * 0.9999 // hotfix to not run into rounding errors :()
+	splitFundsAvailable := fundsAvailable
 
 	// HighHold is a special case, substract from the available amount
 	// HighHoldAmount = 0 => No HighHold required
