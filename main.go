@@ -69,7 +69,7 @@ func runSequence() {
 	}
 
 	for _, conf := range confs {
-		log.Println("Using Bitfinex user API key: " + conf.Bitfinex.APIKey)
+		log.Println("[" + conf.Bitfinex.ActiveWallet + "] " + "Using Bitfinex user API key: " + conf.Bitfinex.APIKey)
 		conf.API = bitfinex.New(conf.Bitfinex.APIKey, conf.Bitfinex.APISecret)
 
 		balance, err := conf.API.WalletBalances()

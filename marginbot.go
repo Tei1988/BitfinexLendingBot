@@ -63,7 +63,7 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	balanceOnOffers := 0.0
 	for _, o := range offers {
 		if strings.ToLower(o.Currency) == activeWallet {
-			log.Println("\tFound active offer: " + strconv.Itoa(o.ID) + ", " + o.Currency + ", " + o.Direction + ", " + strconv.FormatFloat(o.RemainingAmount, 'f', 5, 64) + " @ " + strconv.FormatFloat(o.Rate/356, 'f', 5, 64) + " %")
+			log.Println("\tFound active offer: " + strconv.Itoa(o.ID) + ", " + strings.ToLower(o.Currency) + ", " + o.Direction + ", " + strconv.FormatFloat(o.RemainingAmount, 'f', 5, 64) + " @ " + strconv.FormatFloat(o.Rate/356, 'f', 5, 64) + " %")
 			balanceOnOffers = balanceOnOffers + o.RemainingAmount
 			if err != nil {
 				return
@@ -150,7 +150,7 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 						}
 					} else {
 						log.Println("\tKeeping offer " +
-							strconv.FormatFloat(newOffer.Amount, 'f', 5, 64) + " @ " +
+							strconv.FormatFloat(newOffer.Amount, 'f', 5, 64) + " " + activeWallet + " @ " +
 							strconv.FormatFloat(newOffer.Rate/356, 'f', 5, 64) +
 							" %. Not placing replacement.")
 						loanOffers = append(loanOffers[:j], loanOffers[j+1:]...)
