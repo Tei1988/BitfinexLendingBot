@@ -1,0 +1,6 @@
+[[constraint]]
+  name = "github.com/eAndrius/bitfinex-go"
+
+[prune]
+  go-tests = true
+  unused-packages = true
